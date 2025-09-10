@@ -21,23 +21,24 @@ function App() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [transitionCost, setTransitionCost] = useState(0);
   const [result, setResult] = useState(null);
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   // Load regions, countries, tier1
   useEffect(() => {
-    axios.get("http://localhost:5001/api/pricebook").then((res) => {
+    axios.get(`${API_BASE}/api/pricebook`).then((res) => {
       const uniqueRegions = [...new Set(res.data.map((row) => row.Region))];
       setRegions(uniqueRegions);
       setCountries(res.data);
     });
 
-    axios.get("http://localhost:5001/api/tier1").then((res) => {
+    axios.get(`${API_BASE}/api/tier1`).then((res) => {
       setTier1Cities(res.data.Tier1CitiesUSA);
     });
   }, []);
 
   const calculate = async () => {
     try {
-      const res = await axios.get("http://localhost:5001/api/calc", {
+      const res = await axios.get(`${API_BASE}/api/calc`, {
         params: {
           country,
           city: country === "United States of America (Tier 1)" ? city : null,
