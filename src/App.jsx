@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "./App.css";
+import { Calculator } from "lucide-react";
 
 function App() {
   const [countries, setCountries] = useState([]);
@@ -23,7 +25,6 @@ function App() {
   const [result, setResult] = useState(null);
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
-  // Load regions, countries, tier1
   useEffect(() => {
     axios.get(`${API_BASE}/api/pricebook`).then((res) => {
       const uniqueRegions = [...new Set(res.data.map((row) => row.Region))];
@@ -53,8 +54,8 @@ function App() {
           isOutOfHours,
           cancelled,
           accessDenied,
-          transitionCost
-        }
+          transitionCost,
+        },
       });
       setResult(res.data);
     } catch (err) {
@@ -62,210 +63,284 @@ function App() {
     }
   };
 
-  // Filtered levels (rule: if daily/halfday → only L1-L3)
   const levelOptions =
     rateType === "daily" || rateType === "halfday"
       ? ["L1", "L2", "L3"]
       : ["L1", "L2", "L3", "L4", "L5"];
 
   return (
-    <div style={{ padding: 30, maxWidth: 900, margin: "0 auto", fontFamily: "Arial, sans-serif" }}>
-      <h2 style={{ textAlign: "center", color: "#2c3e50" }}>📘 Price Book Calculator</h2>
-
-      <div style={{ display: "grid", gap: "15px", marginTop: 20 }}>
-        {/* Region */}
-        <div>
-          <label style={{ fontWeight: "bold" }}>Region: </label>
-          <select value={region} onChange={(e) => setRegion(e.target.value)} style={{ padding: "6px 10px" }}>
-            <option value="">-- Select Region --</option>
-            {regions.map((r, i) => (
-              <option key={i} value={r}>{r}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Country */}
-        <div>
-          <label style={{ fontWeight: "bold" }}>Country: </label>
-          <select value={country} onChange={(e) => setCountry(e.target.value)} style={{ padding: "6px 10px" }}>
-            <option value="">-- Select Country --</option>
-            {countries
-              .filter((c) => !region || c.Region === region)
-              .map((c, i) => (
-                <option key={i} value={c.Country}>{c.Country}</option>
-              ))}
-          </select>
-        </div>
-
-        {/* City (for USA Tier 1) */}
-        {country === "United States of America (Tier 1)" && (
-          <div>
-            <label style={{ fontWeight: "bold" }}>City: </label>
-            <select value={city} onChange={(e) => setCity(e.target.value)} style={{ padding: "6px 10px" }}>
-              <option value="">-- Select City --</option>
-              {tier1Cities.map((ct, i) => (
-                <option key={i} value={ct}>{ct}</option>
-              ))}
-            </select>
+    <div className="app-container">
+      {/* Header */}
+      <header className="app-header">
+        <div className="header-content">
+          <div className="title-section">
+            <Calculator className="header-icon" size={50} />
+            <h1 className="header-title">Price Book Calculator</h1>
           </div>
-        )}
-
-        {/* Rate Type */}
-        <div>
-          <label style={{ fontWeight: "bold" }}>Rate Type: </label>
-          <select value={rateType} onChange={(e) => setRateType(e.target.value)} style={{ padding: "6px 10px" }}>
-            <option value="yearly">Yearly (Managed Service)</option>
-            <option value="daily">Full Day (8 hrs)</option>
-            <option value="halfday">Half Day (4 hrs)</option>
-            <option value="dispatch">Dispatch Ticket SLA</option>
-            <option value="dispatchIMAC">Dispatch IMAC SLA</option>
-            <option value="projectShort">Project (Short Term, up to 3 months)</option>
-            <option value="projectLong">Project (Long Term, 3+ months)</option>
-          </select>
-        </div>
-
-        {/* Level (NOW after Rate Type) */}
-        <div>
-          <label style={{ fontWeight: "bold" }}>Level: </label>
-          <select value={level} onChange={(e) => setLevel(e.target.value)} style={{ padding: "6px 10px" }}>
-            {levelOptions.map((lvl) => (
-              <option key={lvl} value={lvl}>{lvl}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Backfill */}
-        {rateType === "yearly" && (
-          <div>
-            <label style={{ fontWeight: "bold" }}>Backfill: </label>
-            <select value={withBackfill} onChange={(e) => setWithBackfill(e.target.value)} style={{ padding: "6px 10px" }}>
-              <option value="true">With Backfill</option>
-              <option value="false">Without Backfill</option>
-            </select>
-          </div>
-        )}
-
-        {/* Quantity */}
-        <div>
-          <label style={{ fontWeight: "bold" }}>Quantity (Engineers): </label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            min="1"
-            style={{ padding: "6px 10px", width: "120px" }}
-          />
-        </div>
-
-        {/* Duration */}
-        {rateType === "yearly" && (
-          <div>
-            <label style={{ fontWeight: "bold" }}>Duration (Months): </label>
-            <input
-              type="number"
-              value={months}
-              onChange={(e) => setMonths(e.target.value)}
-              min="1"
-              max="12"
-              style={{ padding: "6px 10px", width: "120px" }}
-            />
-          </div>
-        )}
-        {(rateType === "daily" || rateType === "halfday") && (
-          <div>
-            <label style={{ fontWeight: "bold" }}>Duration (Days): </label>
-            <input
-              type="number"
-              value={days}
-              onChange={(e) => setDays(e.target.value)}
-              min="1"
-              style={{ padding: "6px 10px", width: "120px" }}
-            />
-          </div>
-        )}
-        {(rateType === "projectShort" || rateType === "projectLong") && (
-          <div>
-            <label style={{ fontWeight: "bold" }}>Duration (Months): </label>
-            <input
-              type="number"
-              value={months}
-              onChange={(e) => setMonths(e.target.value)}
-              min="1"
-              style={{ padding: "6px 10px", width: "120px" }}
-            />
-          </div>
-        )}
-
-        {/* Distance */}
-        <div>
-          <label style={{ fontWeight: "bold" }}>Travel Distance (km): </label>
-          <input
-            type="number"
-            value={distance}
-            onChange={(e) => setDistance(e.target.value)}
-            style={{ padding: "6px 10px", width: "120px" }}
-          />
-        </div>
-
-        {/* Terms */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "15px" }}>
-          <label><input type="checkbox" checked={isWeekend} onChange={(e) => setIsWeekend(e.target.checked)} /> Weekend</label>
-          <label><input type="checkbox" checked={isOutOfHours} onChange={(e) => setIsOutOfHours(e.target.checked)} /> Out of Hours</label>
-          <label><input type="checkbox" checked={cancelled} onChange={(e) => setCancelled(e.target.checked)} /> Cancelled (within 24h)</label>
-          <label><input type="checkbox" checked={accessDenied} onChange={(e) => setAccessDenied(e.target.checked)} /> Access Denied</label>
-        </div>
-
-        {/* Transition cost */}
-        <div>
-          <label style={{ fontWeight: "bold" }}>Transition Cost: </label>
-          <input
-            type="number"
-            value={transitionCost}
-            onChange={(e) => setTransitionCost(e.target.value)}
-            style={{ padding: "6px 10px", width: "120px" }}
-          />
-        </div>
-      </div>
-
-      <button
-        onClick={calculate}
-        style={{
-          marginTop: 25,
-          background: "#3498db",
-          color: "#fff",
-          border: "none",
-          padding: "10px 20px",
-          borderRadius: 6,
-          cursor: "pointer",
-          fontWeight: "bold"
-        }}
-      >
-        Calculate
-      </button>
-
-      {/* Result */}
-      {result && (
-        <div style={{ marginTop: 30, padding: 20, border: "1px solid #ccc", borderRadius: 8, background: "#f9f9f9" }}>
-          <h3 style={{ marginBottom: 10 }}>💰 Result</h3>
-          <p><strong>Region:</strong> {result.region}</p>
-          <p><strong>Country:</strong> {result.country}</p>
-          {result.city && <p><strong>City:</strong> {result.city}</p>}
-          <p><strong>Rate Type:</strong> {result.rateType}</p>
-          <p><strong>Level:</strong> {result.level}</p>
-          {result.rateType === "yearly" && (
-            <p><strong>Backfill:</strong> {result.withBackfill === "true" ? "With Backfill" : "Without Backfill"}</p>
-          )}
-          <p><strong>Quantity:</strong> {result.quantity}</p>
-          <p><strong>Duration:</strong> 
-            {result.rateType === "yearly" && `${result.months} months`}
-            {(result.rateType === "daily" || result.rateType === "halfday") && `${result.days} days`}
-            {(result.rateType === "projectShort" || result.rateType === "projectLong") && `${result.months} months`}
+          <p className="header-subtitle">
+            Transform your pricing into beautiful quotes with our intelligent
+            calculator
           </p>
-          <p><strong>Distance:</strong> {result.distance} km</p>
-          <p><strong>Payment Terms:</strong> {result.paymentTerms}</p>
-          <h4 style={{ marginTop: 15, color: "#27ae60" }}>Final Price: ${result.finalPrice}</h4>
         </div>
-      )}
+      </header>
+
+      {/* Calculator */}
+      <div className={`calculator-section ${result ? "" : "centered"}`}>
+        <div className="form-card">
+          <div className="form-grid">
+            {/* Region */}
+            <div className="form-group">
+              <label htmlFor="region">Region</label>
+              <select
+                id="region"
+                name="region"
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+              >
+                <option value="">-- Select Region --</option>
+                {regions.map((r, i) => (
+                  <option key={i} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Country */}
+            <div className="form-group">
+              <label htmlFor="country">Country</label>
+              <select
+                id="country"
+                name="country"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <option value="">-- Select Country --</option>
+                {countries
+                  .filter((c) => !region || c.Region === region)
+                  .map((c, i) => (
+                    <option key={i} value={c.Country}>{c.Country}</option>
+                  ))}
+              </select>
+            </div>
+
+            {/* City for USA Tier 1 */}
+            {country === "United States of America (Tier 1)" && (
+              <div className="form-group">
+                <label htmlFor="city">City</label>
+                <select
+                  id="city"
+                  name="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                >
+                  <option value="">-- Select City --</option>
+                  {tier1Cities.map((ct, i) => (
+                    <option key={i} value={ct}>{ct}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Rate Type */}
+            <div className="form-group">
+              <label htmlFor="rateType">Rate Type</label>
+              <select
+                id="rateType"
+                name="rateType"
+                value={rateType}
+                onChange={(e) => setRateType(e.target.value)}
+              >
+                <option value="yearly">Yearly (Managed Service)</option>
+                <option value="daily">Full Day (8 hrs)</option>
+                <option value="halfday">Half Day (4 hrs)</option>
+                <option value="dispatch">Dispatch Ticket SLA</option>
+                <option value="dispatchIMAC">Dispatch IMAC SLA</option>
+                <option value="projectShort">Project (Short Term, up to 3 months)</option>
+                <option value="projectLong">Project (Long Term, 3+ months)</option>
+              </select>
+            </div>
+
+            {/* Level */}
+            <div className="form-group">
+              <label htmlFor="level">Level</label>
+              <select
+                id="level"
+                name="level"
+                value={level}
+                onChange={(e) => setLevel(e.target.value)}
+              >
+                {levelOptions.map((lvl) => (
+                  <option key={lvl} value={lvl}>{lvl}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Backfill */}
+            {rateType === "yearly" && (
+              <div className="form-group">
+                <label htmlFor="backfill">Backfill</label>
+                <select
+                  id="backfill"
+                  name="backfill"
+                  value={withBackfill}
+                  onChange={(e) => setWithBackfill(e.target.value)}
+                >
+                  <option value="true">With Backfill</option>
+                  <option value="false">Without Backfill</option>
+                </select>
+              </div>
+            )}
+
+            {/* Quantity */}
+            <div className="form-group">
+              <label htmlFor="quantity">Quantity</label>
+              <input
+                id="quantity"
+                name="quantity"
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                min="1"
+              />
+            </div>
+
+            {/* Duration */}
+            {rateType === "yearly" && (
+              <div className="form-group">
+                <label htmlFor="months">Duration (Months)</label>
+                <input
+                  id="months"
+                  name="months"
+                  type="number"
+                  value={months}
+                  onChange={(e) => setMonths(e.target.value)}
+                  min="1"
+                  max="12"
+                />
+              </div>
+            )}
+            {(rateType === "daily" || rateType === "halfday") && (
+              <div className="form-group">
+                <label htmlFor="days">Duration (Days)</label>
+                <input
+                  id="days"
+                  name="days"
+                  type="number"
+                  value={days}
+                  onChange={(e) => setDays(e.target.value)}
+                  min="1"
+                />
+              </div>
+            )}
+            {(rateType === "projectShort" || rateType === "projectLong") && (
+              <div className="form-group">
+                <label htmlFor="months">Duration (Months)</label>
+                <input
+                  id="months"
+                  name="months"
+                  type="number"
+                  value={months}
+                  onChange={(e) => setMonths(e.target.value)}
+                  min="1"
+                />
+              </div>
+            )}
+
+            {/* Distance */}
+            <div className="form-group">
+              <label htmlFor="distance">Travel Distance (km)</label>
+              <input
+                id="distance"
+                name="distance"
+                type="number"
+                value={distance}
+                onChange={(e) => setDistance(e.target.value)}
+              />
+            </div>
+
+            {/* Transition Cost */}
+            <div className="form-group">
+              <label htmlFor="transitionCost">Transition Cost</label>
+              <input
+                id="transitionCost"
+                name="transitionCost"
+                type="number"
+                value={transitionCost}
+                onChange={(e) => setTransitionCost(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Checkboxes */}
+          <div className="checkbox-group">
+            <label htmlFor="isWeekend">
+              <input
+                id="isWeekend"
+                name="isWeekend"
+                type="checkbox"
+                checked={isWeekend}
+                onChange={(e) => setIsWeekend(e.target.checked)}
+              /> Weekend
+            </label>
+
+            <label htmlFor="isOutOfHours">
+              <input
+                id="isOutOfHours"
+                name="isOutOfHours"
+                type="checkbox"
+                checked={isOutOfHours}
+                onChange={(e) => setIsOutOfHours(e.target.checked)}
+              /> Out of Hours
+            </label>
+
+            <label htmlFor="cancelled">
+              <input
+                id="cancelled"
+                name="cancelled"
+                type="checkbox"
+                checked={cancelled}
+                onChange={(e) => setCancelled(e.target.checked)}
+              /> Cancelled
+            </label>
+
+            <label htmlFor="accessDenied">
+              <input
+                id="accessDenied"
+                name="accessDenied"
+                type="checkbox"
+                checked={accessDenied}
+                onChange={(e) => setAccessDenied(e.target.checked)}
+              /> Access Denied
+            </label>
+          </div>
+
+          <button className="calc-btn" onClick={calculate}>Calculate</button>
+        </div>
+
+        {/* Result */}
+        {result && (
+          <div className="result-card">
+            <h3>Result</h3>
+            <p><strong>Region:</strong> {result.region}</p>
+            <p><strong>Country:</strong> {result.country}</p>
+            {result.city && <p><strong>City:</strong> {result.city}</p>}
+            <p><strong>Rate Type:</strong> {result.rateType}</p>
+            <p><strong>Level:</strong> {result.level}</p>
+            {result.rateType === "yearly" && (
+              <p><strong>Backfill:</strong> {result.withBackfill === "true" ? "With Backfill" : "Without Backfill"}</p>
+            )}
+            <p><strong>Quantity:</strong> {result.quantity}</p>
+            <p>
+              <strong>Duration:</strong>{" "}
+              {result.rateType === "yearly" && `${result.months} months`}
+              {(result.rateType === "daily" || result.rateType === "halfday") && `${result.days} days`}
+              {(result.rateType === "projectShort" || result.rateType === "projectLong") && `${result.months} months`}
+            </p>
+            <p><strong>Distance:</strong> {result.distance} km</p>
+            <p><strong>Payment Terms:</strong> {result.paymentTerms}</p>
+            <h4>Final Price: {result.currency} {result.finalPrice.toLocaleString()}</h4>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
